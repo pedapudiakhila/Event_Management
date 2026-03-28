@@ -1,0 +1,26 @@
+# ===========================
+# NODE MODULES - Never push!
+# ===========================
+node_modules/
+node_modules
+
+# ===========================
+# ENVIRONMENT VARIABLES 🔐
+# ===========================
+.env
+.env.local
+.env.production
+.env.development
+
+# ===========================
+# LOGS
+# ===========================
+*.log
+npm-debug.log*
+logs/
+
+# ===========================
+# OS FILES
+# ===========================
+.DS_Store
+Thumbs.db

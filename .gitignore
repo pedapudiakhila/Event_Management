@@ -1,0 +1,40 @@
+# ===========================
+# NODE MODULES - Never push!
+# ===========================
+node_modules/
+**/node_modules/
+
+# ===========================
+# ENVIRONMENT VARIABLES - Never push!
+# ===========================
+.env
+.env.local
+.env.development
+.env.production
+**/.env
+
+# ===========================
+# BUILD OUTPUT
+# ===========================
+dist/
+build/
+**/dist/
+
+# ===========================
+# LOGS
+# ===========================
+*.log
+npm-debug.log*
+logs/
+
+# ===========================
+# OS FILES
+# ===========================
+.DS_Store
+Thumbs.db
+
+# ===========================
+# EDITOR
+# ===========================
+.vscode/
+.idea/
