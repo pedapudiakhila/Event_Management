@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useParams, Link, useNavigate } from 'react-router-dom'
-import { motion } from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion'
 import { getEvent, registerForEvent } from '../api'
 import { useAuth } from '../context/AuthContext'
 import Navbar from '../components/Navbar'
@@ -15,6 +15,8 @@ export default function EventDetails() {
   const [event, setEvent] = useState(null)
   const [loading, setLoading] = useState(true)
   const [registering, setRegistering] = useState(false)
+  const [showShareMenu, setShowShareMenu] = useState(false)
+  const [linkCopied, setLinkCopied] = useState(false)
 
   useEffect(() => {
     fetchEvent()
@@ -42,6 +44,37 @@ export default function EventDetails() {
       alert(err.response?.data?.message || 'Registration failed')
     } finally {
       setRegistering(false)
+    }
+  }
+
+  const shareUrl = typeof window !== 'undefined' ? window.location.href : ''
+  const shareText = event ? `Check out "${event.title}" on EventSphere!` : 'Check out this event on EventSphere!'
+
+  const shareLinks = [
+    {
+      name: 'WhatsApp',
+      color: 'bg-green-500',
+      href: `https://wa.me/?text=${encodeURIComponent(`${shareText} ${shareUrl}`)}`,
+    },
+    {
+      name: 'Twitter / X',
+      color: 'bg-gray-900',
+      href: `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}&url=${encodeURIComponent(shareUrl)}`,
+    },
+    {
+      name: 'Facebook',
+      color: 'bg-blue-600',
+      href: `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`,
+    },
+  ]
+
+  const handleCopyLink = async () => {
+    try {
+      await navigator.clipboard.writeText(shareUrl)
+      setLinkCopied(true)
+      setTimeout(() => setLinkCopied(false), 2000)
+    } catch (err) {
+      console.error('Copy failed', err)
     }
   }
 
@@ -136,7 +169,7 @@ export default function EventDetails() {
 
         {/* Right */}
         <motion.div initial={{ opacity: 0, x: 40 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.6, delay: 0.3 }}>
-          <div className="bg-white rounded-2xl p-6 shadow-sm sticky top-24">
+          <div className="bg-white rounded-2xl p-6 shadow-sm sticky top-24 relative">
             <div className="text-center mb-5">
               <p className="text-3xl font-extrabold text-indigo-600">{event.price}</p>
               <p className="text-gray-400 text-xs mt-1">per person</p>
@@ -178,10 +211,45 @@ export default function EventDetails() {
               </button>
             )}
 
-            <motion.button whileTap={{ scale: 0.97 }}
-              className="w-full mt-3 border border-gray-200 text-gray-500 py-3 rounded-xl font-semibold hover:bg-gray-50 transition text-sm">
+            <motion.button
+              whileTap={{ scale: 0.97 }}
+              onClick={() => setShowShareMenu((v) => !v)}
+              className="w-full mt-3 border border-gray-200 text-gray-500 py-3 rounded-xl font-semibold hover:bg-gray-50 transition text-sm"
+            >
               Share Event
             </motion.button>
+
+            <AnimatePresence>
+              {showShareMenu && (
+                <motion.div
+                  initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }}
+                  transition={{ duration: 0.18 }}
+                  className="absolute left-6 right-6 mt-2 bg-white border border-gray-100 rounded-xl shadow-lg p-3 z-10"
+                  style={{ top: '100%' }}
+                >
+                  <div className="grid grid-cols-3 gap-2 mb-2">
+                    {shareLinks.map((s) => (
+                      <a
+                        key={s.name}
+                        href={s.href}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        onClick={() => setShowShareMenu(false)}
+                        className={`${s.color} text-white text-xs font-medium rounded-lg py-2 text-center hover:opacity-90 transition`}
+                      >
+                        {s.name}
+                      </a>
+                    ))}
+                  </div>
+                  <button
+                    onClick={handleCopyLink}
+                    className="w-full border border-gray-200 text-gray-600 text-xs font-medium rounded-lg py-2 hover:bg-gray-50 transition"
+                  >
+                    {linkCopied ? 'Link copied!' : 'Copy link'}
+                  </button>
+                </motion.div>
+              )}
+            </AnimatePresence>
 
             <p className="text-center text-xs text-gray-300 mt-4">Secure registration · Free cancellation</p>
           </div>

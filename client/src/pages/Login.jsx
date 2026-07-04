@@ -89,7 +89,7 @@ useEffect(() => {
               <label className="flex items-center gap-2 text-gray-500 cursor-pointer">
                 <input type="checkbox" className="accent-indigo-600" /> Remember me
               </label>
-              <a href="#" className="text-indigo-600 hover:underline">Forgot password?</a>
+              <Link to="/forgot-password" className="text-indigo-600 hover:underline">Forgot password?</Link>
             </div>
 
             <motion.button

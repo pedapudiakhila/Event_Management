@@ -4,7 +4,6 @@ const API = axios.create({
   baseURL: import.meta.env.VITE_API_URL || 'http://localhost:5000/api' 
 })
 
-// Attach token to every request automatically
 API.interceptors.request.use((req) => {
   const token = localStorage.getItem('token')
   if (token) req.headers.Authorization = `Bearer ${token}`
@@ -14,6 +13,8 @@ API.interceptors.request.use((req) => {
 export const registerUser = (data) => API.post('/auth/register', data)
 export const loginUser = (data) => API.post('/auth/login', data)
 export const getMe = () => API.get('/auth/me')
+export const forgotPassword = (email) => API.post('/auth/forgot-password', { email })
+export const resetPassword = (token, password) => API.post(`/auth/reset-password/${token}`, { password })
 
 export const getEvents = (params) => API.get('/events', { params })
 export const getEvent = (id) => API.get(`/events/${id}`)
