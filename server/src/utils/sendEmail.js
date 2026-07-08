@@ -5,7 +5,9 @@ const transporter = nodemailer.createTransport({
   auth: {
     user: process.env.GMAIL_USER,
     pass: process.env.GMAIL_APP_PASSWORD
-  }
+  },
+  logger: true,
+  debug: true
 })
 
 const sendPasswordResetEmail = async (toEmail, resetUrl) => {
@@ -32,7 +34,11 @@ const sendPasswordResetEmail = async (toEmail, resetUrl) => {
     `
   }
 
-  await transporter.sendMail(mailOptions)
+const info = await transporter.sendMail(mailOptions)
+  console.log('[sendEmail] messageId:', info.messageId)
+  console.log('[sendEmail] response:', info.response)
+  console.log('[sendEmail] accepted:', info.accepted)
+  console.log('[sendEmail] rejected:', info.rejected)
 }
 
 module.exports = { sendPasswordResetEmail }

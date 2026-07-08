@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import React, { useState, useEffect } from 'react'
 import { useParams, Link, useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { getEvent, registerForEvent } from '../api'
@@ -7,6 +7,12 @@ import Navbar from '../components/Navbar'
 
 const fadeUp = { hidden: { opacity: 0, y: 30 }, show: { opacity: 1, y: 0, transition: { duration: 0.5 } } }
 const stagger = { hidden: {}, show: { transition: { staggerChildren: 0.12 } } }
+
+const shareLinks = [
+  { name: 'WhatsApp', color: 'bg-green-500' },
+  { name: 'Twitter / X', color: 'bg-gray-900' },
+  { name: 'Facebook', color: 'bg-blue-600' },
+]
 
 export default function EventDetails() {
   const { id } = useParams()
@@ -48,25 +54,14 @@ export default function EventDetails() {
   }
 
   const shareUrl = typeof window !== 'undefined' ? window.location.href : ''
-  const shareText = event ? `Check out "${event.title}" on EventSphere!` : 'Check out this event on EventSphere!'
+  const shareText = event ? 'Check out "' + event.title + '" on EventSphere!' : 'Check out this event on EventSphere!'
 
-  const shareLinks = [
-    {
-      name: 'WhatsApp',
-      color: 'bg-green-500',
-      href: `https://wa.me/?text=${encodeURIComponent(`${shareText} ${shareUrl}`)}`,
-    },
-    {
-      name: 'Twitter / X',
-      color: 'bg-gray-900',
-      href: `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}&url=${encodeURIComponent(shareUrl)}`,
-    },
-    {
-      name: 'Facebook',
-      color: 'bg-blue-600',
-      href: `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`,
-    },
-  ]
+  const getShareHref = (name) => {
+    if (name === 'WhatsApp') return 'https://wa.me/?text=' + encodeURIComponent(shareText + ' ' + shareUrl)
+    if (name === 'Twitter / X') return 'https://twitter.com/intent/tweet?text=' + encodeURIComponent(shareText) + '&url=' + encodeURIComponent(shareUrl)
+    if (name === 'Facebook') return 'https://www.facebook.com/sharer/sharer.php?u=' + encodeURIComponent(shareUrl)
+    return '#'
+  }
 
   const handleCopyLink = async () => {
     try {
@@ -78,20 +73,27 @@ export default function EventDetails() {
     }
   }
 
-  if (loading) return (
-    <div className="min-h-screen flex items-center justify-center">
-      <div className="w-10 h-10 border-4 border-indigo-200 border-t-indigo-600 rounded-full animate-spin"></div>
-    </div>
-  )
+  const closeShareMenu = () => setShowShareMenu(false)
+  const toggleShareMenu = () => setShowShareMenu(!showShareMenu)
 
-  if (!event) return (
-    <div className="min-h-screen flex items-center justify-center">
-      <div className="text-center">
-        <p className="text-xl font-semibold text-gray-700">Event not found</p>
-        <Link to="/events" className="text-indigo-600 mt-4 inline-block hover:underline">← Back to Events</Link>
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-theme flex items-center justify-center">
+        <div className="w-10 h-10 border-4 border-accent-soft border-t-accent rounded-full animate-spin"></div>
       </div>
-    </div>
-  )
+    )
+  }
+
+  if (!event) {
+    return (
+      <div className="min-h-screen bg-theme flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-xl font-semibold text-primary">Event not found</p>
+          <Link to="/events" className="text-accent mt-4 inline-block hover:underline">← Back to Events</Link>
+        </div>
+      </div>
+    )
+  }
 
   const seatsLeft = event.seats - event.registered
   const percent = Math.round((event.registered / event.seats) * 100)
@@ -102,17 +104,17 @@ export default function EventDetails() {
     Business: 'from-pink-500 to-rose-500',
     Cultural: 'from-yellow-500 to-orange-500',
   }
+  const heroGradient = colorMap[event.category] || 'from-indigo-500 to-purple-500'
 
   return (
-    <div className="min-h-screen bg-gray-50">
-
-      {/* Navbar */}
+    <div className="min-h-screen bg-theme">
       <Navbar />
 
-      {/* Hero */}
       <motion.div
-        initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.6 }}
-        className={`bg-gradient-to-br ${colorMap[event.category] || 'from-indigo-500 to-purple-500'} text-white py-20 px-10`}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.6 }}
+        className={'bg-gradient-to-br ' + heroGradient + ' text-white py-20 px-10'}
       >
         <div className="max-w-4xl mx-auto">
           <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.2 }}>
@@ -120,83 +122,86 @@ export default function EventDetails() {
             <span className="bg-white/20 text-white text-xs px-3 py-1 rounded-full mb-4 inline-block ml-4">{event.category}</span>
           </motion.div>
           <motion.h1
-            initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}
-            className="text-4xl font-extrabold mt-3 mb-5"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
+            className="font-display text-4xl font-semibold mt-3 mb-5"
           >
             {event.title}
           </motion.h1>
           <motion.div
-            initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.4 }}
             className="flex flex-wrap gap-6 text-white/80 text-sm"
           >
             <span>{event.date} at {event.time}</span>
             <span>{event.venue}, {event.location}</span>
             <span>{event.price}</span>
-            <span>By {event.organizer?.name || 'Organizer'}</span>
+            <span>By {event.organizer && event.organizer.name ? event.organizer.name : 'Organizer'}</span>
           </motion.div>
         </div>
       </motion.div>
 
-      {/* Content */}
       <div className="max-w-4xl mx-auto px-6 py-10 grid grid-cols-1 md:grid-cols-3 gap-8">
-
-        {/* Left */}
         <motion.div variants={stagger} initial="hidden" animate="show" className="md:col-span-2 space-y-6">
-          <motion.div variants={fadeUp} className="bg-white rounded-2xl p-6 shadow-sm">
-            <h2 className="text-lg font-bold text-gray-800 mb-3">About this Event</h2>
-            <p className="text-gray-500 leading-relaxed text-sm">{event.description}</p>
+          <motion.div variants={fadeUp} className="bg-surface rounded-2xl p-6 shadow-elegant">
+            <h2 className="font-display text-lg font-semibold text-primary mb-3">About this Event</h2>
+            <p className="text-secondary leading-relaxed text-sm">{event.description}</p>
           </motion.div>
 
-          <motion.div variants={fadeUp} className="bg-white rounded-2xl p-6 shadow-sm">
-            <h2 className="text-lg font-bold text-gray-800 mb-4">Event Highlights</h2>
+          <motion.div variants={fadeUp} className="bg-surface rounded-2xl p-6 shadow-elegant">
+            <h2 className="font-display text-lg font-semibold text-primary mb-4">Event Highlights</h2>
             <div className="grid grid-cols-2 gap-3">
-              {['Networking Opportunities', 'Expert Speakers', 'Certificates Provided', 'Free Refreshments'].map((h, i) => (
-                <div key={i} className="flex items-center gap-2 text-gray-500 text-sm">
-                  <span className="w-2 h-2 bg-indigo-400 rounded-full inline-block"></span> {h}
-                </div>
-              ))}
+              {['Networking Opportunities', 'Expert Speakers', 'Certificates Provided', 'Free Refreshments'].map((h, i) => {
+                return (
+                  <div key={i} className="flex items-center gap-2 text-secondary text-sm">
+                    <span className="w-2 h-2 bg-accent rounded-full inline-block"></span> {h}
+                  </div>
+                )
+              })}
             </div>
           </motion.div>
 
-          <motion.div variants={fadeUp} className="bg-white rounded-2xl p-6 shadow-sm">
-            <h2 className="text-lg font-bold text-gray-800 mb-3">Location</h2>
-            <div className="bg-gray-50 rounded-xl p-4 text-sm text-gray-500">
-              <p className="font-semibold text-gray-800">{event.venue}</p>
+          <motion.div variants={fadeUp} className="bg-surface rounded-2xl p-6 shadow-elegant">
+            <h2 className="font-display text-lg font-semibold text-primary mb-3">Location</h2>
+            <div className="bg-surface-2 rounded-xl p-4 text-sm text-secondary">
+              <p className="font-semibold text-primary">{event.venue}</p>
               <p>{event.location}, India</p>
             </div>
           </motion.div>
         </motion.div>
 
-        {/* Right */}
         <motion.div initial={{ opacity: 0, x: 40 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.6, delay: 0.3 }}>
-          <div className="bg-white rounded-2xl p-6 shadow-sm sticky top-24 relative">
+          <div className="bg-surface rounded-2xl p-6 shadow-elegant sticky top-24 relative">
             <div className="text-center mb-5">
-              <p className="text-3xl font-extrabold text-indigo-600">{event.price}</p>
-              <p className="text-gray-400 text-xs mt-1">per person</p>
+              <p className="font-display text-3xl font-semibold text-accent">{event.price}</p>
+              <p className="text-muted text-xs mt-1">per person</p>
             </div>
 
             <div className="mb-5">
-              <div className="flex justify-between text-xs text-gray-400 mb-1">
+              <div className="flex justify-between text-xs text-muted mb-1">
                 <span>{event.registered} registered</span>
                 <span>{seatsLeft} left</span>
               </div>
-              <div className="w-full bg-gray-100 rounded-full h-1.5">
+              <div className="w-full bg-surface-2 rounded-full h-1.5">
                 <motion.div
                   initial={{ width: 0 }}
-                  animate={{ width: `${percent}%` }}
+                  animate={{ width: percent + '%' }}
                   transition={{ duration: 0.9, ease: 'easeOut', delay: 0.5 }}
-                  className="bg-indigo-500 h-1.5 rounded-full"
+                  className="bg-accent h-1.5 rounded-full"
                 />
               </div>
-              <p className="text-xs text-gray-300 mt-1">{percent}% filled</p>
+              <p className="text-xs text-muted mt-1">{percent}% filled</p>
             </div>
 
             {seatsLeft > 0 ? (
               <motion.button
-                whileTap={{ scale: 0.97 }} whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.97 }}
+                whileHover={{ scale: 1.02 }}
                 onClick={handleRegister}
                 disabled={registering}
-                className="w-full bg-indigo-600 text-white py-3 rounded-xl font-semibold hover:bg-indigo-700 transition flex items-center justify-center"
+                className="w-full bg-accent text-white py-3 rounded-xl font-semibold hover:bg-[var(--accent-hover)] transition shadow-elegant flex items-center justify-center"
               >
                 {registering ? (
                   <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -206,52 +211,57 @@ export default function EventDetails() {
                 ) : 'Register Now'}
               </motion.button>
             ) : (
-              <button disabled className="w-full bg-gray-100 text-gray-400 py-3 rounded-xl font-semibold cursor-not-allowed">
+              <button disabled className="w-full bg-surface-2 text-muted py-3 rounded-xl font-semibold cursor-not-allowed">
                 Sold Out
               </button>
             )}
 
             <motion.button
               whileTap={{ scale: 0.97 }}
-              onClick={() => setShowShareMenu((v) => !v)}
-              className="w-full mt-3 border border-gray-200 text-gray-500 py-3 rounded-xl font-semibold hover:bg-gray-50 transition text-sm"
+              onClick={toggleShareMenu}
+              className="w-full mt-3 border border-theme text-secondary py-3 rounded-xl font-semibold hover:bg-surface-2 transition text-sm"
             >
               Share Event
             </motion.button>
 
             <AnimatePresence>
-              {showShareMenu && (
+              {showShareMenu ? (
                 <motion.div
-                  initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }}
+                  initial={{ opacity: 0, y: -8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -8 }}
                   transition={{ duration: 0.18 }}
-                  className="absolute left-6 right-6 mt-2 bg-white border border-gray-100 rounded-xl shadow-lg p-3 z-10"
+                  className="absolute left-6 right-6 mt-2 bg-surface border border-theme rounded-xl shadow-elegant p-3 z-10"
                   style={{ top: '100%' }}
                 >
                   <div className="grid grid-cols-3 gap-2 mb-2">
-                    {shareLinks.map((s) => (
-                      <a
-                        key={s.name}
-                        href={s.href}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        onClick={() => setShowShareMenu(false)}
-                        className={`${s.color} text-white text-xs font-medium rounded-lg py-2 text-center hover:opacity-90 transition`}
-                      >
-                        {s.name}
-                      </a>
-                    ))}
+                    {shareLinks.map(function (s) {
+                      const linkClass = s.color + ' text-white text-xs font-medium rounded-lg py-2 text-center hover:opacity-90 transition'
+                      return React.createElement(
+                        'a',
+                        {
+                          key: s.name,
+                          href: getShareHref(s.name),
+                          target: '_blank',
+                          rel: 'noopener noreferrer',
+                          onClick: closeShareMenu,
+                          className: linkClass,
+                        },
+                        s.name
+                      )
+                    })}
                   </div>
                   <button
                     onClick={handleCopyLink}
-                    className="w-full border border-gray-200 text-gray-600 text-xs font-medium rounded-lg py-2 hover:bg-gray-50 transition"
+                    className="w-full border border-theme text-secondary text-xs font-medium rounded-lg py-2 hover:bg-surface-2 transition"
                   >
                     {linkCopied ? 'Link copied!' : 'Copy link'}
                   </button>
                 </motion.div>
-              )}
+              ) : null}
             </AnimatePresence>
 
-            <p className="text-center text-xs text-gray-300 mt-4">Secure registration · Free cancellation</p>
+            <p className="text-center text-xs text-muted mt-4">Secure registration · Free cancellation</p>
           </div>
         </motion.div>
       </div>
