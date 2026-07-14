@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useAuth } from '../context/AuthContext'
 import { useTheme } from '../context/ThemeContext'
+import NotificationBell from './NotificationBell'
 
 export function ThemeToggle() {
   const { theme, toggleTheme } = useTheme()
@@ -71,11 +72,12 @@ export default function Navbar({ active }) {
         </Link>
         {user ? (
           <>
-            <Link to={user.role === 'admin' ? '/admin' : '/dashboard'} className="hover:text-accent transition">
+            <Link to={user.role === 'admin' ? '/admin' : '/dashboard'} className="hover:text-indigo-600 transition">
               Dashboard
             </Link>
+            <NotificationBell />
             <button onClick={handleLogout}
-              className="border border-theme text-secondary px-5 py-2 rounded-lg hover:bg-surface-2 transition text-sm font-medium">
+              className="border border-gray-200 text-gray-600 px-5 py-2 rounded-lg hover:bg-gray-50 transition text-sm font-medium">
               Logout
             </button>
           </>

@@ -1,10 +1,13 @@
 const Registration = require('../models/Registration')
 const Event = require('../models/Event')
+const { notifyUser, notifyAdmins } = require('../utils/notify')
 
 const registerForEvent = async (req, res) => {
   try {
     const event = await Event.findById(req.params.eventId)
     if (!event) return res.status(404).json({ message: 'Event not found' })
+    if (event.priceAmount && event.priceAmount > 0)
+      return res.status(400).json({ message: 'This event requires payment. Use the payment flow to register.' })
     if (event.seats - event.registered <= 0)
       return res.status(400).json({ message: 'No seats available' })
 
@@ -17,6 +20,10 @@ const registerForEvent = async (req, res) => {
     })
 
     await Event.findByIdAndUpdate(req.params.eventId, { $inc: { registered: 1 } })
+
+    notifyUser(req.user.id, `You're registered for "${event.title}"!`, 'registration_confirmed', '/dashboard')
+    notifyAdmins(`New registration for "${event.title}"`, 'new_registration', '/admin')
+
     res.status(201).json(registration)
   } catch (err) {
     res.status(500).json({ message: err.message })
@@ -35,13 +42,16 @@ const getMyRegistrations = async (req, res) => {
 
 const cancelRegistration = async (req, res) => {
   try {
-    const registration = await Registration.findById(req.params.id)
+    const registration = await Registration.findById(req.params.id).populate('event')
     if (!registration) return res.status(404).json({ message: 'Registration not found' })
     if (registration.user.toString() !== req.user.id)
       return res.status(403).json({ message: 'Not authorized' })
 
     await Registration.findByIdAndDelete(req.params.id)
-    await Event.findByIdAndUpdate(registration.event, { $inc: { registered: -1 } })
+    await Event.findByIdAndUpdate(registration.event._id, { $inc: { registered: -1 } })
+
+    notifyUser(req.user.id, `Your registration for "${registration.event.title}" has been cancelled.`, 'registration_cancelled', '/dashboard')
+
     res.json({ message: 'Registration cancelled' })
   } catch (err) {
     res.status(500).json({ message: err.message })

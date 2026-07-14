@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { useParams, Link, useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
-import { getEvent, registerForEvent } from '../api'
+import { getEvent, registerForEvent, createPaymentOrder, verifyPayment } from '../api'
 import { useAuth } from '../context/AuthContext'
 import Navbar from '../components/Navbar'
 
@@ -39,8 +39,11 @@ export default function EventDetails() {
     }
   }
 
-  const handleRegister = async () => {
+const handleRegister = async () => {
     if (!user) return navigate('/login')
+    if (event.priceAmount && event.priceAmount > 0) {
+      return handlePaidRegister()
+    }
     setRegistering(true)
     try {
       await registerForEvent(id)
@@ -49,6 +52,60 @@ export default function EventDetails() {
     } catch (err) {
       alert(err.response?.data?.message || 'Registration failed')
     } finally {
+      setRegistering(false)
+    }
+  }
+
+  const handlePaidRegister = async () => {
+    setRegistering(true)
+    try {
+      const orderRes = await createPaymentOrder(id)
+      const orderId = orderRes.data.orderId
+      const amount = orderRes.data.amount
+      const currency = orderRes.data.currency
+      const keyId = orderRes.data.keyId
+
+      const options = {
+        key: keyId,
+        amount: amount,
+        currency: currency,
+        name: 'EventSphere',
+        description: event.title,
+        order_id: orderId,
+        handler: async function (response) {
+          try {
+            await verifyPayment({
+              eventId: id,
+              razorpay_order_id: response.razorpay_order_id,
+              razorpay_payment_id: response.razorpay_payment_id,
+              razorpay_signature: response.razorpay_signature
+            })
+            alert('Payment successful! You are registered.')
+            navigate('/dashboard')
+          } catch (err) {
+            alert(err.response && err.response.data && err.response.data.message ? err.response.data.message : 'Payment verification failed')
+          } finally {
+            setRegistering(false)
+          }
+        },
+        prefill: {
+          name: user.name,
+          email: user.email
+        },
+        theme: {
+          color: '#4f38e0'
+        },
+        modal: {
+          ondismiss: function () {
+            setRegistering(false)
+          }
+        }
+      }
+
+      const rzp = new window.Razorpay(options)
+      rzp.open()
+    } catch (err) {
+      alert(err.response && err.response.data && err.response.data.message ? err.response.data.message : 'Could not start payment')
       setRegistering(false)
     }
   }

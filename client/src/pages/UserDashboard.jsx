@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { getMyRegistrations, updateProfile } from '../api'
 import { useAuth } from '../context/AuthContext'
 import { ThemeToggle } from '../components/Navbar'
+import NotificationBell from '../components/NotificationBell'
 const fadeUp = { hidden: { opacity: 0, y: 24 }, show: { opacity: 1, y: 0, transition: { duration: 0.5 } } }
 const stagger = { hidden: {}, show: { transition: { staggerChildren: 0.12 } } }
 
@@ -393,8 +394,9 @@ export default function UserDashboard() {
             </button>
           ))}
         </nav>
-        <div className="px-4 mb-2">
+        <div className="px-4 mb-2 flex items-center gap-3">
           <ThemeToggle />
+          <NotificationBell align="top-right" />
         </div>
         <button onClick={handleLogout} className="px-4 py-3 text-sm text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30 rounded-xl text-left transition">
           Logout
@@ -404,11 +406,14 @@ export default function UserDashboard() {
       <div className="flex-1 min-w-0">
         <div className="md:hidden flex items-center justify-between px-6 py-4 bg-surface shadow-theme sticky top-0 z-10">
           <span className="text-lg font-bold text-accent">EventSphere</span>
-          <button onClick={() => setSidebarOpen(true)} className="flex flex-col gap-1.5 p-2">
-            <span className="block w-6 h-0.5 bg-secondary"></span>
-            <span className="block w-6 h-0.5 bg-secondary"></span>
-            <span className="block w-6 h-0.5 bg-secondary"></span>
-          </button>
+          <div className="flex items-center gap-3">
+            <NotificationBell />
+            <button onClick={() => setSidebarOpen(true)} className="flex flex-col gap-1.5 p-2">
+              <span className="block w-6 h-0.5 bg-secondary"></span>
+              <span className="block w-6 h-0.5 bg-secondary"></span>
+              <span className="block w-6 h-0.5 bg-secondary"></span>
+            </button>
+          </div>
         </div>
 
         <div className="p-6 md:p-8">

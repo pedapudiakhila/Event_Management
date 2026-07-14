@@ -2,7 +2,11 @@ const User = require('../models/User')
 const bcrypt = require('bcryptjs')
 const jwt = require('jsonwebtoken')
 const crypto = require('crypto')
+const { OAuth2Client } = require('google-auth-library')
 const { sendPasswordResetEmail } = require('../utils/sendEmail')
+const { notifyAdmins } = require('../utils/notify')
+
+const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID)
 const generateToken = (user, expiresIn) => {
   return jwt.sign(
     { id: user._id, role: user.role },
@@ -19,6 +23,8 @@ const register = async (req, res) => {
     const hashed = await bcrypt.hash(password, 10)
     const user = await User.create({ name, email, password: hashed, role })
     const token = generateToken(user)
+
+    notifyAdmins(`${user.name} just signed up`, 'new_signup', '/admin')
 
     res.status(201).json({
       token,
@@ -142,4 +148,41 @@ const updateProfile = async (req, res) => {
     res.status(500).json({ message: err.message })
   }
 }
-module.exports = { register, login, getMe, forgotPassword, resetPassword, updateProfile }
+const googleAuth = async (req, res) => {
+  try {
+    const { credential } = req.body
+    const ticket = await googleClient.verifyIdToken({
+      idToken: credential,
+      audience: process.env.GOOGLE_CLIENT_ID
+    })
+    const payload = ticket.getPayload()
+    const { sub: googleId, email, name } = payload
+
+    let user = await User.findOne({ $or: [{ googleId }, { email }] })
+
+    if (user) {
+      if (!user.googleId) {
+        user.googleId = googleId
+        await user.save()
+      }
+    } else {
+      user = await User.create({
+        name,
+        email,
+        googleId,
+        password: undefined,
+        role: 'user'
+      })
+    }
+
+    const token = generateToken(user)
+    res.json({
+      token,
+      user: { id: user._id, name: user.name, email: user.email, role: user.role }
+    })
+  } catch (err) {
+    res.status(500).json({ message: 'Google authentication failed' })
+  }
+}
+
+module.exports = { register, login, getMe, updateProfile, forgotPassword, resetPassword, googleAuth }

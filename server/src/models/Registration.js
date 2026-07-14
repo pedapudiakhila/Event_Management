@@ -15,7 +15,10 @@ const registrationSchema = new mongoose.Schema({
     type: String,
     enum: ['confirmed', 'cancelled'],
     default: 'confirmed'
-  }
+  },
+  razorpayOrderId: { type: String, default: null },
+  razorpayPaymentId: { type: String, default: null },
+  amountPaid: { type: Number, default: 0 }
 }, { timestamps: true })
 
 // Prevent duplicate registrations

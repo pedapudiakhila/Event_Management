@@ -1,4 +1,5 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom'
+import { useEffect } from 'react'
 import LandingPage from './pages/LandingPage'
 import Login from './pages/Login'
 import Signup from './pages/Signup'
@@ -8,10 +9,20 @@ import Events from './pages/Events'
 import EventDetails from './pages/EventDetails'
 import AdminDashboard from './pages/AdminDashboard'
 import UserDashboard from './pages/UserDashboard'
-
+function TabSessionMarker() {
+  const location = useLocation()
+  useEffect(() => {
+    const isResetFlow = location.pathname.startsWith('/reset-password')
+    if (!isResetFlow) {
+      sessionStorage.setItem('eventsphere-tab-active', 'true')
+    }
+  }, [location.pathname])
+  return null
+}
 function App() {
   return (
     <BrowserRouter>
+    <TabSessionMarker />
       <Routes>
         <Route path="/" element={<LandingPage />} />
         <Route path="/login" element={<Login />} />

@@ -1,28 +1,41 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
+import { GoogleLogin } from '@react-oauth/google'
 import { useAuth } from '../context/AuthContext'
 
 export default function Signup() {
   const [form, setForm] = useState({ name: '', email: '', password: '', confirm: '', role: 'user' })
+const [showPassword, setShowPassword] = useState(false)
+const [showConfirm, setShowConfirm] = useState(false)
   const [loading, setLoading] = useState(false)
   const navigate = useNavigate()
-  const { register } = useAuth()
+  const { register, googleLogin } = useAuth()
   const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value })
 
   const handleSubmit = async (e) => {
-    e.preventDefault()
-    if (!form.name || !form.email || !form.password) return alert('Fill all fields!')
-    if (form.password !== form.confirm) return alert('Passwords do not match!')
-    setLoading(true)
+  e.preventDefault()
+  if (!form.name || !form.email || !form.password) return alert('Fill all fields!')
+  if (form.password !== form.confirm) return alert('Passwords do not match!')
+  setLoading(true)
+  try {
+    const user = await register({ name: form.name, email: form.email, password: form.password, role: form.role })
+    if (user.role === 'admin') navigate('/admin')
+    else navigate('/dashboard')
+  } catch (err) {
+    alert(err.response?.data?.message || 'Signup failed')
+  } finally {
+    setLoading(false)
+  }
+}
+
+  const handleGoogleSuccess = async (credentialResponse) => {
     try {
-      const user = await register({ name: form.name, email: form.email, password: form.password, role: form.role })
+      const user = await googleLogin(credentialResponse.credential)
       if (user.role === 'admin') navigate('/admin')
       else navigate('/dashboard')
     } catch (err) {
-      alert(err.response?.data?.message || 'Signup failed')
-    } finally {
-      setLoading(false)
+      alert('Google sign-in failed')
     }
   }
 
@@ -83,15 +96,27 @@ export default function Signup() {
             </div>
             <div>
               <label className="block text-sm font-medium text-secondary mb-1">Password</label>
-              <input type="password" name="password" value={form.password} onChange={handleChange}
-                placeholder="••••••••"
-                className="w-full border border-theme rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 bg-surface-2 text-primary" />
+              <div className="relative">
+                <input type={showPassword ? 'text' : 'password'} name="password" value={form.password} onChange={handleChange}
+                  placeholder="••••••••"
+                  className="w-full border border-theme rounded-xl px-4 py-3 pr-12 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 bg-surface-2 text-primary" />
+                <button type="button" onClick={() => setShowPassword((v) => !v)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted hover:text-primary text-xs font-medium">
+                  {showPassword ? 'Hide' : 'Show'}
+                </button>
+              </div>
             </div>
             <div>
               <label className="block text-sm font-medium text-secondary mb-1">Confirm Password</label>
-              <input type="password" name="confirm" value={form.confirm} onChange={handleChange}
-                placeholder="••••••••"
-                className="w-full border border-theme rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 bg-surface-2 text-primary" />
+              <div className="relative">
+                <input type={showConfirm ? 'text' : 'password'} name="confirm" value={form.confirm} onChange={handleChange}
+                  placeholder="••••••••"
+                  className="w-full border border-theme rounded-xl px-4 py-3 pr-12 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 bg-surface-2 text-primary" />
+                <button type="button" onClick={() => setShowConfirm((v) => !v)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted hover:text-primary text-xs font-medium">
+                  {showConfirm ? 'Hide' : 'Show'}
+                </button>
+              </div>
             </div>
 
             {/* Role Selector */}
@@ -127,6 +152,20 @@ export default function Signup() {
                 </svg>
               ) : 'Create Account'}
             </motion.button>
+
+            <div className="flex items-center gap-3 text-muted text-sm">
+              <div className="flex-1 h-px bg-theme"></div>or continue with<div className="flex-1 h-px bg-theme"></div>
+            </div>
+
+            <div className="flex justify-center">
+              <GoogleLogin
+                onSuccess={handleGoogleSuccess}
+                onError={() => alert('Google sign-in failed')}
+                theme="outline"
+                shape="pill"
+                width="320"
+              />
+            </div>
           </div>
 
           <p className="text-center text-sm text-secondary mt-8">

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { resetPassword } from '../api'
@@ -12,7 +12,16 @@ export default function ResetPassword() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState(false)
-
+useEffect(() => {
+  const alreadyActiveInThisTab = sessionStorage.getItem('eventsphere-tab-active')
+  if (!alreadyActiveInThisTab) {
+    const original = document.documentElement.getAttribute('data-theme')
+    document.documentElement.setAttribute('data-theme', 'light')
+    return () => {
+      if (original) document.documentElement.setAttribute('data-theme', original)
+    }
+  }
+}, [])
   const handleSubmit = async (e) => {
     e.preventDefault()
     setError('')

@@ -4,8 +4,9 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { getEvents, createEvent, updateEvent, deleteEvent, getAllRegistrations } from '../api'
 import { useAuth } from '../context/AuthContext'
 import { ThemeToggle } from '../components/Navbar'
+import NotificationBell from '../components/NotificationBell'
 
-const emptyForm = { title: '', description: '', category: 'Technology', date: '', time: '10:00 AM', location: '', venue: '', seats: '', price: 'Free' }
+const emptyForm = { title: '', description: '', category: 'Technology', date: '', time: '10:00 AM', location: '', venue: '', seats: '', price: 'Free', priceAmount: '0' }
 const fadeUp = { hidden: { opacity: 0, y: 24 }, show: { opacity: 1, y: 0, transition: { duration: 0.5 } } }
 const stagger = { hidden: {}, show: { transition: { staggerChildren: 0.1 } } }
 
@@ -60,12 +61,13 @@ const fetchRegistrations = async () => {
       return alert('Fill all fields!')
     setSaving(true)
     try {
+      const payload = { ...form, seats: parseInt(form.seats), priceAmount: parseFloat(form.priceAmount) || 0 }
       if (editId) {
-        const res = await updateEvent(editId, { ...form, seats: parseInt(form.seats) })
+        const res = await updateEvent(editId, payload)
         setEvents(events.map(e => e._id === editId ? res.data : e))
         setEditId(null)
       } else {
-        const res = await createEvent({ ...form, seats: parseInt(form.seats) })
+        const res = await createEvent(payload)
         setEvents([...events, res.data])
       }
       setForm(emptyForm)
@@ -78,7 +80,7 @@ const fetchRegistrations = async () => {
   }
 
   const handleEdit = (event) => {
-    setForm({ ...event, seats: String(event.seats) })
+    setForm({ ...event, seats: String(event.seats), priceAmount: String(event.priceAmount || 0) })
     setEditId(event._id)
     setShowModal(true)
   }
@@ -140,8 +142,9 @@ const filteredAttendees = registrations.filter(r => {
             <p className="text-xs text-secondary mt-0.5 truncate">{user?.name}</p>
           </div>
         </div>
-        <div className="px-2 mb-2 flex justify-center">
+        <div className="px-2 mb-2 flex items-center justify-center gap-3">
           <ThemeToggle />
+          <NotificationBell align="top-right" />
         </div>
         <button onClick={handleLogout}
           className="px-4 py-3 text-sm text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30 rounded-xl text-left transition">
@@ -155,13 +158,15 @@ const filteredAttendees = registrations.filter(r => {
         {/* Mobile topbar */}
         <div className="md:hidden flex items-center justify-between px-6 py-4 bg-surface shadow-theme sticky top-0 z-10">
           <span className="text-lg font-bold text-accent">EventSphere</span>
-          <button onClick={() => setSidebarOpen(true)} className="flex flex-col gap-1.5 p-2">
-            <span className="block w-6 h-0.5 bg-secondary"></span>
-            <span className="block w-6 h-0.5 bg-secondary"></span>
-            <span className="block w-6 h-0.5 bg-secondary"></span>
-          </button>
+          <div className="flex items-center gap-3">
+            <NotificationBell />
+            <button onClick={() => setSidebarOpen(true)} className="flex flex-col gap-1.5 p-2">
+              <span className="block w-6 h-0.5 bg-secondary"></span>
+              <span className="block w-6 h-0.5 bg-secondary"></span>
+              <span className="block w-6 h-0.5 bg-secondary"></span>
+            </button>
+          </div>
         </div>
-
         <div className="p-6 md:p-8">
           <AnimatePresence mode="wait">
             {active === 'dashboard' && (
@@ -458,6 +463,7 @@ const filteredAttendees = registrations.filter(r => {
                   { label: 'Venue', name: 'venue', type: 'text', placeholder: 'e.g. Science City Auditorium' },
                   { label: 'Total Seats', name: 'seats', type: 'number', placeholder: 'e.g. 100' },
                   { label: 'Price', name: 'price', type: 'text', placeholder: 'e.g. Free or ₹499' },
+                  { label: 'Price Amount (₹, use 0 for Free)', name: 'priceAmount', type: 'number', placeholder: 'e.g. 499 or 0' },
                 ].map(f => (
                   <div key={f.name}>
                     <label className="block text-sm font-medium text-secondary mb-1">{f.label}</label>

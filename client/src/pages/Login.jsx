@@ -1,14 +1,16 @@
 import { Link, useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
+import { GoogleLogin } from '@react-oauth/google'
 import { useAuth } from '../context/AuthContext'
 import { useState, useEffect } from 'react'
 import { getEvents } from '../api'
 
 export default function Login() {
   const [form, setForm] = useState({ email: '', password: '', rememberMe: false })
+const [showPassword, setShowPassword] = useState(false)
   const [loading, setLoading] = useState(false)
   const navigate = useNavigate()
-  const { login } = useAuth()
+  const { login, googleLogin } = useAuth()
   const [events, setEvents] = useState([])
 
   useEffect(() => {
@@ -30,6 +32,16 @@ const handleCheckbox = (e) => setForm({ ...form, rememberMe: e.target.checked })
       alert(err.response?.data?.message || 'Login failed')
     } finally {
       setLoading(false)
+    }
+  }
+
+  const handleGoogleSuccess = async (credentialResponse) => {
+    try {
+      const user = await googleLogin(credentialResponse.credential)
+      if (user.role === 'admin') navigate('/admin')
+      else navigate('/dashboard')
+    } catch (err) {
+      alert('Google sign-in failed')
     }
   }
 
@@ -82,9 +94,15 @@ const handleCheckbox = (e) => setForm({ ...form, rememberMe: e.target.checked })
             </div>
             <div>
               <label className="block text-sm font-medium text-secondary mb-1">Password</label>
-              <input type="password" name="password" value={form.password} onChange={handleChange}
-                placeholder="••••••••"
-                className="w-full border border-theme rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 bg-surface-2 text-primary" />
+              <div className="relative">
+                <input type={showPassword ? 'text' : 'password'} name="password" value={form.password} onChange={handleChange}
+                  placeholder="••••••••"
+                  className="w-full border border-theme rounded-xl px-4 py-3 pr-12 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 bg-surface-2 text-primary" />
+                <button type="button" onClick={() => setShowPassword((v) => !v)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted hover:text-primary text-xs font-medium">
+                  {showPassword ? 'Hide' : 'Show'}
+                </button>
+              </div>
             </div>
 
             <div className="flex items-center justify-between text-sm">
@@ -109,7 +127,17 @@ const handleCheckbox = (e) => setForm({ ...form, rememberMe: e.target.checked })
             </motion.button>
 
             <div className="flex items-center gap-3 text-muted text-sm">
-              <div className="flex-1 h-px bg-theme"></div>or continue as<div className="flex-1 h-px bg-theme"></div>
+              <div className="flex-1 h-px bg-theme"></div>or continue with<div className="flex-1 h-px bg-theme"></div>
+            </div>
+
+            <div className="flex justify-center">
+              <GoogleLogin
+                onSuccess={handleGoogleSuccess}
+                onError={() => alert('Google sign-in failed')}
+                theme="outline"
+                shape="pill"
+                width="320"
+              />
             </div>
           </div>
 

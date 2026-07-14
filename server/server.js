@@ -14,6 +14,8 @@ app.use(express.json())
 app.use('/api/auth', require('./src/routes/auth'))
 app.use('/api/events', require('./src/routes/events'))
 app.use('/api/registrations', require('./src/routes/registrations'))
+app.use('/api/payments', require('./src/routes/payment.routes'))
+app.use('/api/notifications', require('./src/routes/notification.routes'))
 
 // Health check
 app.get('/', (req, res) => res.json({ message: 'EventSphere API running' }))

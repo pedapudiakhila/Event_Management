@@ -15,6 +15,7 @@ const eventSchema = new mongoose.Schema({
   seats: { type: Number, required: true },
   registered: { type: Number, default: 0 },
   price: { type: String, default: 'Free' },
+  priceAmount: { type: Number, default: 0 },
   organizer: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
