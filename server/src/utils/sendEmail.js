@@ -1,5 +1,4 @@
 const nodemailer = require('nodemailer')
-
 const transporter = nodemailer.createTransport({
   host: 'smtp.gmail.com',
   port: 587,
@@ -12,7 +11,6 @@ const transporter = nodemailer.createTransport({
   greetingTimeout: 10000,
   socketTimeout: 10000
 })
-
 const sendPasswordResetEmail = async (toEmail, resetUrl) => {
   const mailOptions = {
     from: `EventSphere <${process.env.GMAIL_USER}>`,
@@ -41,5 +39,4 @@ const sendPasswordResetEmail = async (toEmail, resetUrl) => {
   }
   await transporter.sendMail(mailOptions)
 }
-
 module.exports = { sendPasswordResetEmail }
