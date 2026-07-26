@@ -1,42 +1,40 @@
-const nodemailer = require('nodemailer')
-const transporter = nodemailer.createTransport({
-  host: 'smtp.gmail.com',
-  port: 587,
-  secure: false,
-  auth: {
-    user: process.env.GMAIL_USER,
-    pass: process.env.GMAIL_APP_PASSWORD
-  },
-  connectionTimeout: 10000,
-  greetingTimeout: 10000,
-  socketTimeout: 10000
-})
-const sendPasswordResetEmail = async (toEmail, resetUrl) => {
-  const mailOptions = {
-    from: `EventSphere <${process.env.GMAIL_USER}>`,
-    to: toEmail,
-    subject: 'Reset your EventSphere password',
-    text: `Reset your EventSphere password by opening this link (expires in 1 hour): ${resetUrl}`,
-    html: `
-      <div style="font-family: Arial, sans-serif; max-width: 480px; margin: 0 auto;">
-        <h2 style="color: #4f46e5; font-size: 20px;">Reset your password</h2>
-        <p style="color: #333; font-size: 14px; line-height: 1.6;">Hi,</p>
-        <p style="color: #333; font-size: 14px; line-height: 1.6;">
-          We received a request to reset the password for your <strong>EventSphere</strong> account.
-        </p>
-        <p style="color: #333; font-size: 14px; line-height: 1.6;">
-          Open this link to choose a new password (expires in 1 hour):
-        </p>
-        <p style="font-size: 14px;">
-          <a href="${resetUrl}" style="color: #4f46e5; font-weight: 600;">${resetUrl}</a>
-        </p>
-        <p style="color: #999; font-size: 12px; margin-top: 24px;">
-          If you didn't request this, you can safely ignore this email — your password will not change.
-        </p>
-        <p style="color: #333; font-size: 14px;">— EventSphere</p>
-      </div>
-    `
+const { Resend } = require('resend');
+
+const resend = new Resend(process.env.RESEND_API_KEY);
+
+const sendPasswordResetEmail = async (email, resetUrl) => {
+  try {
+    const { data, error } = await resend.emails.send({
+      from: 'Event Management <onboarding@resend.dev>',
+      to: [email],
+      subject: 'Password Reset Request - Event Management',
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 8px;">
+          <h2 style="color: #333333; text-align: center;">Reset Your Password</h2>
+          <p style="color: #555555; font-size: 16px;">Hello,</p>
+          <p style="color: #555555; font-size: 16px;">We received a request to reset your password for your Event Management account. Click the button below to proceed:</p>
+          <div style="text-align: center; margin: 30px 0;">
+            <a href="${resetUrl}" style="background-color: #4F46E5; color: #ffffff; padding: 12px 24px; text-decoration: none; border-radius: 5px; font-weight: bold; display: inline-block;">Reset Password</a>
+          </div>
+          <p style="color: #777777; font-size: 14px;">If the button above doesn't work, copy and paste this link into your browser:</p>
+          <p style="color: #4F46E5; font-size: 14px; word-break: break-all;"><a href="${resetUrl}">${resetUrl}</a></p>
+          <hr style="border: none; border-top: 1px solid #eeeeee; margin: 20px 0;" />
+          <p style="color: #999999; font-size: 12px; text-align: center;">This link will expire in 1 hour. If you did not request a password reset, please ignore this email.</p>
+        </div>
+      `,
+    });
+
+    if (error) {
+      console.error('[Resend Error]:', error);
+      throw new Error(`Failed to send email: ${error.message}`);
+    }
+
+    console.log('[Resend Success]: Email sent with ID:', data.id);
+    return data;
+  } catch (err) {
+    console.error('[sendPasswordResetEmail Error]:', err);
+    throw err;
   }
-  await transporter.sendMail(mailOptions)
-}
-module.exports = { sendPasswordResetEmail }
+};
+
+module.exports = { sendPasswordResetEmail };
