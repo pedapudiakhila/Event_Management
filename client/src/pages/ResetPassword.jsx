@@ -12,16 +12,18 @@ export default function ResetPassword() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState(false)
-useEffect(() => {
-  const alreadyActiveInThisTab = sessionStorage.getItem('eventsphere-tab-active')
-  if (!alreadyActiveInThisTab) {
-    const original = document.documentElement.getAttribute('data-theme')
-    document.documentElement.setAttribute('data-theme', 'light')
-    return () => {
-      if (original) document.documentElement.setAttribute('data-theme', original)
-    }
-  }
-}, [])
+
+  useEffect(() => {
+    // 1. Check if user already has a saved theme preference in this profile/browser
+    const savedTheme = localStorage.getItem('eventsphere-theme')
+    
+    // 2. If savedTheme exists ('dark' or 'light'), keep it.
+    //    If no saved theme exists, default strictly to 'light'.
+    const themeToApply = (savedTheme === 'dark' || savedTheme === 'light') ? savedTheme : 'light'
+    
+    document.documentElement.setAttribute('data-theme', themeToApply)
+  }, [])
+
   const handleSubmit = async (e) => {
     e.preventDefault()
     setError('')

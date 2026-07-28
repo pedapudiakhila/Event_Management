@@ -4,7 +4,8 @@ const ThemeContext = createContext()
 
 export function ThemeProvider({ children }) {
   const [theme, setTheme] = useState(() => {
-    return localStorage.getItem('eventsphere-theme') || 'light'
+    const saved = localStorage.getItem('eventsphere-theme')
+    return (saved === 'dark' || saved === 'light') ? saved : 'light'
   })
 
   useEffect(() => {
